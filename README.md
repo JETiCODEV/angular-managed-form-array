@@ -1,27 +1,33 @@
 # ManagedFormArray
 
-This project was generated with [Angular CLI](https://github.com/angular/angular-cli) version 14.2.1.
+Ever struggled with managing complex Angular form arrays ? I did and quite a lot, mainly when you need to subscribe to `valueChanges`
+of the different `FormGroup` items. While having tried different solutions, none of them felt actually good.
 
-## Development server
+So one day I was reading up on the `FormArray` subject in an attempt to figure out a better way to manage this and came up with this concept.
 
-Run `ng serve` for a dev server. Navigate to `http://localhost:4200/`. The application will automatically reload if you change any of the source files.
+The idea is to create an abstract class on top of the default Angular `FormArray` class. This abstraction manages the creation of each `FormGroup`
+inside the array, but besides that also makes it possible to get `valueChanges` of each individual `FormGroup`.
 
-## Code scaffolding
+# Create a ManagedArray
+The `ManagedArray` class will behave the same as the default `FormArray` since it inherits from it. Only difference is that it has a different constructor
+which accepts 2 parameters:
+- `destroy`: This should be a `Subject` which signals that the it everything should be cleaned up.
+- `initialData`: An array that contains the initial objects from which a `FormGroup` needs to be created of. This parameter is an optional parameter and can also be left out.
 
-Run `ng generate component component-name` to generate a new component. You can also use `ng generate directive|pipe|service|class|guard|interface|enum|module`.
+Since the implementation is abstract it will require you to implement the `createForm` method. This method will create a `FormGroup` out of a normal object.
+It will also be called when passing initial data into the constructor.
 
-## Build
+# Using `MangedArray`
+The base class has 2 methods:
+- `addItem`: Add a new `FormGroup` to the array
+- `removeItem`: Remove a `FormGroup` instance from the array.
 
-Run `ng build` to build the project. The build artifacts will be stored in the `dist/` directory.
-
-## Running unit tests
-
-Run `ng test` to execute the unit tests via [Karma](https://karma-runner.github.io).
-
-## Running end-to-end tests
-
-Run `ng e2e` to execute the end-to-end tests via a platform of your choice. To use this command, you need to first add a package that implements end-to-end testing capabilities.
-
-## Further help
-
-To get more help on the Angular CLI use `ng help` or go check out the [Angular CLI Overview and Command Reference](https://angular.io/cli) page.
+# Listening for changes
+`ManagedArray` exposes an observable called `groupChanges`, it will emit the `FormGroup` that got changed and has the following structure:
+```typescript
+{
+    form: T;
+    index: number;
+}
+```
+The `form` property is a reference to the `FormGroup` instance and index is the index number in the `FormArray`
