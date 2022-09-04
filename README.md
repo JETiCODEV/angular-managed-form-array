@@ -11,6 +11,9 @@ The idea is to create an abstract class on top of the default Angular `FormArray
 creation of each `FormGroup`
 inside the array, but besides that also makes it possible to get `valueChanges` of each individual `FormGroup`.
 
+Following diagram represents the class structure:
+![img.png](images/diagram.png)
+
 # Create a ManagedArray
 
 The `ManagedArray` class will behave the same as the default `FormArray` since it inherits from it. Only difference is
