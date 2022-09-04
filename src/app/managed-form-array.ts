@@ -1,10 +1,6 @@
-import {AbstractControl, FormArray, FormControl, FormGroup} from "@angular/forms";
-import {finalize, Subject, Subscription} from "rxjs";
+import { AbstractControl, FormArray } from '@angular/forms';
+import { Subject, Subscription } from 'rxjs';
 
-declare type IsAny<T, Y, N> = 0 extends 1 & T ? Y : N;
-export declare type TypedOrUntyped<T, Typed, Untyped> = IsAny<T,
-  Untyped,
-  Typed>;
 export declare type RawValue<T extends AbstractControl | undefined> =
   T extends AbstractControl<any, any>
     ? T['setValue'] extends (v: infer R) => void
@@ -12,24 +8,16 @@ export declare type RawValue<T extends AbstractControl | undefined> =
       : never
     : never;
 
-export interface AddressForm {
-  street: FormControl<string | null>;
-  nr: FormControl<number | null>;
-}
-
-export interface TestForm {
-  name: FormControl<string>;
-  list: FormArray<FormGroup<AddressForm>>;
-}
-
-export abstract class ManagedFormArray<T extends AbstractControl<any, any>> extends FormArray<T> {
+export abstract class ManagedFormArray<
+  T extends AbstractControl<any, any>
+> extends FormArray<T> {
   private readonly subscriptionMap = new Map<AbstractControl, Subscription>();
   private readonly destroy: Subject<void>;
   private readonly _groupChange = new Subject<{ form: T; index: number }>();
 
   public readonly groupChanges = this._groupChange.asObservable();
 
-  constructor(
+  protected constructor(
     destroy: Subject<void>,
     initialData?: ReadonlyArray<RawValue<T>>
   ) {
@@ -37,17 +25,10 @@ export abstract class ManagedFormArray<T extends AbstractControl<any, any>> exte
     this.setupInitialData(initialData);
     this.destroy = destroy;
 
-    const subscription = this.destroy
-      .subscribe(() => {
-        this.subscriptionMap.forEach((x) => x.unsubscribe());
-        subscription.unsubscribe();
-      });
-  }
-
-  private setupInitialData(initialData?: ReadonlyArray<RawValue<T>>) {
-    if (initialData) {
-      initialData.forEach((x) => this.addItem(x));
-    }
+    const subscription = this.destroy.subscribe(() => {
+      this.subscriptionMap.forEach((x) => x.unsubscribe());
+      subscription.unsubscribe();
+    });
   }
 
   public addItem(data: RawValue<T>) {
@@ -69,11 +50,15 @@ export abstract class ManagedFormArray<T extends AbstractControl<any, any>> exte
     this.removeAt(index);
   }
 
-  private subscribe(form: T, index: number): Subscription {
-    return form.valueChanges.subscribe(() => {
-      this._groupChange.next({form, index});
-    });
+  abstract createForm(data: RawValue<T>): T;
+
+  private setupInitialData(initialData?: ReadonlyArray<RawValue<T>>) {
+    initialData?.forEach((x) => this.addItem(x));
   }
 
-  abstract createForm(data: RawValue<T>): T;
+  private subscribe(form: T, index: number): Subscription {
+    return form.valueChanges.subscribe(() => {
+      this._groupChange.next({ form, index });
+    });
+  }
 }
